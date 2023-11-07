@@ -1,12 +1,10 @@
 package com.tec.zhiyou.easylatias.domain;
 
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.tec.zhiyou.easylatias.annotation.Annotation;
 import org.apache.commons.codec.digest.Md5Crypt;
+import org.apache.commons.lang3.ObjectUtils;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -90,9 +88,13 @@ public class RuleInfo {
         String requestPath = "";
         PsiAnnotation[] annotations = psiMethod.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
+            if (ObjectUtils.isEmpty(annotation)) {
+                continue;
+            }
             String qualifiedName = annotation.getQualifiedName();
-            if (Objects.equals(annotation.getQualifiedName(), qualifiedName)) {
-                requestPath = Objects.requireNonNull(annotation.findAttributeValue("value")).getText();
+            PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
+            if (Objects.equals(annotation.getQualifiedName(), qualifiedName) && ObjectUtils.isNotEmpty(psiAnnotationMemberValue)) {
+                requestPath = psiAnnotationMemberValue.getText();
                 break;
             }
         }

@@ -50,7 +50,7 @@ public class UserPermissionUtil {
 
     private static void setNodeSelect(CheckBoxTreeNode<String> root, Map<String, Boolean> hashCodeToSelectMap) {
         if (ObjectUtils.isEmpty(hashCodeToSelectMap)) {
-            return;
+            hashCodeToSelectMap = new HashMap<>(0);
         }
         // 设置选中状态
         Enumeration<TreeNode> newTreeChildren = root.children();
