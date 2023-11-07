@@ -1,0 +1,11 @@
+!!com.tec.zhiyou.easylatias.domain.yaml.LatiasYaml
+latias:
+  blackList: !!set {}
+  client: null
+  interceptorStrategy: forbidden
+  manuallyReportResources: {}
+  registerBy: HTTP
+  registerWithLatias: false
+  relationConfiguration: null
+  serviceUrl: null
+  whiteList: !!set {}

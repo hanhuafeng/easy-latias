@@ -1,0 +1,20 @@
+latias:
+  # 注册到latias；true：注册，false：不注册
+  register-with-latias: ${REGISTER_WITH_LATIAS:{{REGISTER_WITH_LATIAS}}}
+  interceptor-strategy: ${INTERCEPTOR_STRATEGY:{{INTERCEPTOR_STRATEGY}}}
+  service-url:
+#    default-zone: ${SERVICE_URL:http://192.168.100.16:3000/api/v1}
+    default-zone: ${SERVICE_URL:{{SERVICE_URL}}}
+  client:
+    id: ${CLIENT_ID:{{CLIENT_ID}}}
+    secret: ${CLIENT_SECRET:{{CLIENT_SECRET}}}
+  relation-configuration:
+    # 角色权限关联关系
+    role:
+      {{roleList}}
+    permission:
+      {{permissionList}}
+  manually-report-resources:
+    {{manuallyReportResources}}
+  white-list:
+    - path: /**
