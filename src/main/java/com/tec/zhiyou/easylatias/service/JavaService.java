@@ -10,12 +10,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class JavaService implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Project project;
@@ -28,7 +30,7 @@ public class JavaService implements Serializable {
     }
 
     public static JavaService getInstance(@NotNull Project project) {
-        return ServiceManager.getService(project, JavaService.class);
+        return project.getService(JavaService.class);
     }
 
     /**
