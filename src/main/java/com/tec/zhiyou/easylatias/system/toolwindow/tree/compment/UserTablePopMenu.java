@@ -60,7 +60,6 @@ public class UserTablePopMenu extends JPopupMenu {
                     setTitle("添加角色");
                     init();
                 }
-
                 @Override
                 protected @NotNull JComponent createCenterPanel() {
                     JPanel panel = new JPanel(new GridLayout(2, 2));

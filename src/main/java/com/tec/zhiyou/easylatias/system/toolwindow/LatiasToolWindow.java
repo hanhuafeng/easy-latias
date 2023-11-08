@@ -23,6 +23,7 @@ import com.tec.zhiyou.easylatias.service.LatiasService;
 import com.tec.zhiyou.easylatias.system.toolwindow.listener.CheckBoxTreeNodeSelectionListener;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.*;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.checkbox.CheckBoxTreeNode;
+import com.tec.zhiyou.easylatias.system.toolwindow.tree.compment.GlobalConfigDialog;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.compment.UserTablePopMenu;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.render.CheckBoxTreeCellRenderer;
 import com.tec.zhiyou.easylatias.util.AsyncUtils;
@@ -38,6 +39,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileWriter;
@@ -57,8 +60,7 @@ public class LatiasToolWindow {
     private JButton fresh;
     private JPanel easyLatiasToolWindow;
     private JScrollPane userTableScrollPane;
-
-    private String moduleName;
+    private JButton configBtn;
 
     private final Project project;
 
@@ -89,7 +91,6 @@ public class LatiasToolWindow {
             return false;
         }
     };
-    ;
 
     /**
      * 权限树
@@ -100,6 +101,9 @@ public class LatiasToolWindow {
      * 初始化
      */
     public void initData() {
+        if (ObjectUtils.isNotEmpty(DataCenter.getInstance(project).getBaseConfig().getModuleName())) {
+            modulePath.setText(DataCenter.getInstance(project).getBaseConfig().getModuleName());
+        }
         userTable.setModel(userTableModel);
 //        permissionTree.setCellRenderer(new PermissionTreeCellRenderer());
         permissionTree.setCellRenderer(new CheckBoxTreeCellRenderer());
@@ -130,43 +134,7 @@ public class LatiasToolWindow {
 
     private void initListener() {
         generateBtn.addActionListener(e -> {
-            if (ObjectUtils.isEmpty(moduleName)) {
-                JOptionPane.showMessageDialog(null, "请选择模块", "提示", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            Map<String, String> yamlParamMap = new LinkedHashMap<>();
-            List<String> permissionTempList = new LinkedList<>();
-            List<String> manuallyReportResourcesTempList = new LinkedList<>();
-            Map<String, List<String>> manuallyReportResourcesTempMap = new LinkedHashMap<>();
-            List<String> roleList = getRoleList();
-            getPermission(manuallyReportResourcesTempMap, permissionTempList);
-            for (Map.Entry<String, List<String>> entry : manuallyReportResourcesTempMap.entrySet()) {
-                String key = entry.getKey();
-                List<String> value = entry.getValue();
-                String manuallyReportResourcesTemplate = "      {{key}}: \n{{value}}";
-                manuallyReportResourcesTemplate = manuallyReportResourcesTemplate.replace("{{key}}", key)
-                        .replace("{{value}}", String.join("\n", value));
-                manuallyReportResourcesTempList.add(manuallyReportResourcesTemplate);
-            }
-            yamlParamMap.put("roleList", String.join("\n", roleList));
-            yamlParamMap.put("manuallyReportResources", String.join("\n", manuallyReportResourcesTempList));
-            yamlParamMap.put("permissionList", String.join("\n", permissionTempList));
-
-            // 渲染yaml
-            String yaml = YamlTemplate.LATIAS_YAML_TEMPLATE_1_1_74.replace("{{roleList}}", yamlParamMap.get("roleList"))
-                    .replace("{{permissionList}}", yamlParamMap.get("permissionList"))
-                    .replace("{{manuallyReportResources}}", yamlParamMap.get("manuallyReportResources"));
-
-
-            try {
-                FileWriter fileWriter = new FileWriter(modulePath.getText() + "/src/main/resources/latias.yaml");
-                fileWriter.write(yaml);
-                fileWriter.close();
-                JOptionPane.showMessageDialog(null, "生成成功", "提示", JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-                JOptionPane.showMessageDialog(null, "生成失败", "提示", JOptionPane.ERROR_MESSAGE);
-            }
+            generateBtnListenEvent();
         });
         // 刷新按钮
         fresh.addActionListener(e -> {
@@ -206,18 +174,7 @@ public class LatiasToolWindow {
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     // 左键
-                    int selectedRow = userTable.getSelectedRow();
-                    if (selectedRow > -1) {
-                        String key = (String) userTable.getValueAt(selectedRow, 0);
-                        SELECTED_USER_INFO = DataCenter.getInstance(project).getUserInfoList().stream().filter(userInfo -> userInfo.getKey().equals(key)).findFirst().orElse(null);
-                        if (SELECTED_USER_INFO != null) {
-                            UserPermissionUtil.parseStringToPermissionTree(SELECTED_USER_INFO.getNodeHashCodeToSelectMap(), treeRoot);
-                            // 渲染树
-                            roleTreeModel.setRoot(treeRoot);
-                            roleTreeModel.reload();
-                            permissionTree.repaint();
-                        }
-                    }
+                    userTableLeftClickListenEvent();
                 } else if (SwingUtilities.isRightMouseButton(e)) {
                     // 右键，则打开一个右键菜单
                     UserTablePopMenu userTablePopMenu = new UserTablePopMenu(project, userTable, treeRoot, userTableModel, roleTreeModel);
@@ -247,7 +204,77 @@ public class LatiasToolWindow {
                 }
             }
         });
+
+        // 选中监听
         permissionTree.addMouseListener(new CheckBoxTreeNodeSelectionListener(permissionTree));
+
+        // 配置按钮
+        configBtn.addActionListener(e -> {
+            new GlobalConfigDialog(project).show();
+        });
+    }
+
+    /**
+     * 生成latias.yaml按钮监听事件
+     */
+    private void generateBtnListenEvent() {
+        if (ObjectUtils.isEmpty(DataCenter.getInstance(project).getBaseConfig().getModuleName())) {
+            JOptionPane.showMessageDialog(null, "请选择模块", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Map<String, String> yamlParamMap = new LinkedHashMap<>();
+        List<String> permissionTempList = new LinkedList<>();
+        List<String> manuallyReportResourcesTempList = new LinkedList<>();
+        Map<String, List<String>> manuallyReportResourcesTempMap = new LinkedHashMap<>();
+        List<String> roleList = getRoleList();
+        getPermission(manuallyReportResourcesTempMap, permissionTempList);
+        for (Map.Entry<String, List<String>> entry : manuallyReportResourcesTempMap.entrySet()) {
+            String key = entry.getKey();
+            List<String> value = entry.getValue();
+            String manuallyReportResourcesTemplate = "      {{key}}: \n{{value}}";
+            manuallyReportResourcesTemplate = manuallyReportResourcesTemplate.replace("{{key}}", key)
+                    .replace("{{value}}", String.join("\n", value));
+            manuallyReportResourcesTempList.add(manuallyReportResourcesTemplate);
+        }
+        yamlParamMap.put("roleList", String.join("\n", roleList));
+        yamlParamMap.put("manuallyReportResources", String.join("\n", manuallyReportResourcesTempList));
+        yamlParamMap.put("permissionList", String.join("\n", permissionTempList));
+
+        // 渲染yaml
+        String yaml = YamlTemplate.LATIAS_YAML_TEMPLATE_1_1_74
+                .replace("{{roleList}}", yamlParamMap.get("roleList"))
+                .replace("{{permissionList}}", yamlParamMap.get("permissionList"))
+                .replace("{{manuallyReportResources}}", yamlParamMap.get("manuallyReportResources"))
+                .replace("{{defaultZone}}", DataCenter.getInstance(project).getBaseConfig().getLatiasDefaultZone())
+                .replace("{{clientId}}", DataCenter.getInstance(project).getBaseConfig().getClientId())
+                .replace("{{clientSecret}}", DataCenter.getInstance(project).getBaseConfig().getClientSecret());
+        try {
+            FileWriter fileWriter = new FileWriter(DataCenter.getInstance(project).getBaseConfig().getModuleName() + "/src/main/resources/latias.yaml");
+            fileWriter.write(yaml);
+            fileWriter.close();
+            JOptionPane.showMessageDialog(null, "生成成功", "提示", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ioException) {
+            JOptionPane.showMessageDialog(null, "生成失败", "提示", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException(ioException);
+        }
+    }
+
+    /**
+     * 用户表格左键点击事件
+     */
+    private void userTableLeftClickListenEvent() {
+        int selectedRow = userTable.getSelectedRow();
+        if (selectedRow > -1) {
+            String key = (String) userTable.getValueAt(selectedRow, 0);
+            SELECTED_USER_INFO = DataCenter.getInstance(project).getUserInfoList().stream().filter(userInfo -> userInfo.getKey().equals(key)).findFirst().orElse(null);
+            if (SELECTED_USER_INFO != null) {
+                UserPermissionUtil.parseStringToPermissionTree(SELECTED_USER_INFO.getNodeHashCodeToSelectMap(), treeRoot);
+                // 渲染树
+                roleTreeModel.setRoot(treeRoot);
+                roleTreeModel.reload();
+                permissionTree.repaint();
+            }
+        }
     }
 
     /**
@@ -267,7 +294,6 @@ public class LatiasToolWindow {
         if (!chosenElements.isEmpty()) {
             Module module = chosenElements.get(0);
             chooseModulePath(module);
-            moduleName = module.getName();
         }
     }
 
@@ -289,6 +315,7 @@ public class LatiasToolWindow {
             }
         }
         modulePath.setText(moduleDirPath);
+        DataCenter.getInstance(project).getBaseConfig().setModuleName(moduleDirPath);
     }
 
     /**
@@ -451,6 +478,12 @@ public class LatiasToolWindow {
         return null;
     }
 
+    /**
+     * 获取权限
+     *
+     * @param manuallyReportResourcesTempMap 上报的资源
+     * @param permissionTempList             权限列表
+     */
     private void getPermission(Map<String, List<String>> manuallyReportResourcesTempMap,
                                List<String> permissionTempList) {
         // 取权限
@@ -577,7 +610,7 @@ public class LatiasToolWindow {
      *
      * @param restElement           restElement
      * @param controllerElementNode controllerElementNode
-     * @return
+     * @return 格式化后的文本
      */
     @NotNull
     private static String getPermissionString(RestElementNode restElement, ControllerElementNode controllerElementNode) {

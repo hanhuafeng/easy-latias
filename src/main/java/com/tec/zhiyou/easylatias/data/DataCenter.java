@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.tec.zhiyou.easylatias.domain.BaseConfig;
 import com.tec.zhiyou.easylatias.domain.UserInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,15 +25,26 @@ public class DataCenter implements PersistentStateComponent<DataCenter> {
      */
     private List<UserInfo> userInfoList;
 
+    /**
+     * 项目级别的配置
+     */
+    private BaseConfig baseConfig;
+
     // 获取反序列化后的结果-项目级别
     public static DataCenter getInstance(Project project) {
         DataCenter dataCenter = project.getService(DataCenter.class);
         if (dataCenter.userInfoList == null) {
             dataCenter.userInfoList = new LinkedList<>();
         }
+        if (dataCenter.baseConfig == null) {
+            dataCenter.baseConfig = new BaseConfig();
+        }
         return project.getService(DataCenter.class);
     }
-    public DataCenter(){}
+
+    public DataCenter() {
+    }
+
     public DataCenter(List<UserInfo> userInfoList) {
         this.userInfoList = userInfoList;
     }
@@ -44,7 +56,6 @@ public class DataCenter implements PersistentStateComponent<DataCenter> {
 
     @Override
     public void loadState(@NotNull DataCenter state) {
-        System.out.println(state);
         XmlSerializerUtil.copyBean(state, this);
     }
 
@@ -59,5 +70,13 @@ public class DataCenter implements PersistentStateComponent<DataCenter> {
     @Override
     public void noStateLoaded() {
         PersistentStateComponent.super.noStateLoaded();
+    }
+
+    public BaseConfig getBaseConfig() {
+        return baseConfig;
+    }
+
+    public void setBaseConfig(BaseConfig baseConfig) {
+        this.baseConfig = baseConfig;
     }
 }

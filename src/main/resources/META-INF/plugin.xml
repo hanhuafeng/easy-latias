@@ -7,7 +7,7 @@
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>Easy-Latias</name>
 
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="huafeng.han@zhiyou-tec.con" url="https://www.zhiyou-tec.com">智邮科技</vendor>
@@ -23,7 +23,9 @@
 
     <change-notes>
         <![CDATA[
-        1.0.0
+        1.0.1
+        【FEATURE】新增全局配置
+        【FIX】修复Module Path无法存储的问题
         ]]>
     </change-notes>
 

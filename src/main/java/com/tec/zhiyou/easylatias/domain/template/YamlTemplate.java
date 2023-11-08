@@ -14,10 +14,10 @@ public class YamlTemplate {
                   register-with-latias: ${REGISTER_WITH_LATIAS:true}
                   interceptor-strategy: ${INTERCEPTOR_STRATEGY:allowed}
                   service-url:
-                    default-zone: ${SERVICE_URL:https://latias.zhiyou-tec.com/api/v1}
+                    default-zone: ${SERVICE_URL:{{defaultZone}}}
                   client:
-                    id: ${CLIENT_ID:}
-                    secret: ${CLIENT_SECRET:}
+                    id: ${CLIENT_ID:{{clientId}}}
+                    secret: ${CLIENT_SECRET:{{clientSecret}}}
                   relation-configuration:
                     # 角色权限关联关系
                     role:
