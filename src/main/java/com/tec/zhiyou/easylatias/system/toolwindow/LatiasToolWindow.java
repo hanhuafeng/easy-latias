@@ -141,6 +141,7 @@ public class LatiasToolWindow {
             DumbService.getInstance(project).runWhenSmart(() -> {
                 AsyncUtils.runRead(project, this::getElements, map -> {
                     this.elements = map;
+                    renderTree(map);
                     // 设置选中的用户
                     if (SELECTED_USER_INFO != null) {
                         SELECTED_USER_INFO = DataCenter.getInstance(project).getUserInfoList().stream().filter(userInfo -> userInfo.getKey().equals(SELECTED_USER_INFO.getKey())).findFirst().orElse(null);
