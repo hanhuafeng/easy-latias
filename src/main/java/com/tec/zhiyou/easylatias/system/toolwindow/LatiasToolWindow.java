@@ -29,6 +29,7 @@ import com.tec.zhiyou.easylatias.system.toolwindow.tree.render.CheckBoxTreeCellR
 import com.tec.zhiyou.easylatias.util.AsyncUtils;
 import com.tec.zhiyou.easylatias.util.PsiDocCommentUtil;
 import com.tec.zhiyou.easylatias.util.UserPermissionUtil;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,7 @@ public class LatiasToolWindow {
         permissionTree.setShowsRootHandles(false);
         DumbService.getInstance(project).runWhenSmart(() -> {
             AsyncUtils.runRead(project, this::getElements, map -> {
-                renderTree(map);
+                renderTree(map, false);
                 initListener();
             });
         });
@@ -141,7 +142,7 @@ public class LatiasToolWindow {
             DumbService.getInstance(project).runWhenSmart(() -> {
                 AsyncUtils.runRead(project, this::getElements, map -> {
                     this.elements = map;
-                    renderTree(map);
+                    renderTree(map, true);
                     // 设置选中的用户
                     if (SELECTED_USER_INFO != null) {
                         SELECTED_USER_INFO = DataCenter.getInstance(project).getUserInfoList().stream().filter(userInfo -> userInfo.getKey().equals(SELECTED_USER_INFO.getKey())).findFirst().orElse(null);
@@ -368,28 +369,32 @@ public class LatiasToolWindow {
      *
      * @param map map
      */
-    public void renderTree(@NotNull Map<PsiElement, List<RuleInfo>> map) {
+    public void renderTree(@NotNull Map<PsiElement, List<RuleInfo>> map, boolean refresh) {
         this.elements = map;
         treeRoot = generateTreeRoot(map, true);
-        if (ObjectUtils.isEmpty(DataCenter.getInstance(project).getUserInfoList())) {
-            UserInfo userInfo = new UserInfo("super-admin", "超级管理员", UserPermissionUtil.parsePermissionTreeToString(treeRoot));
-            DataCenter.getInstance(project).getUserInfoList().add(userInfo);
-            userTableModel.addRow(new String[]{"super-admin", "超级管理员"});
-            SELECTED_USER_INFO = userInfo;
-        } else {
-            List<UserInfo> userInfoList = DataCenter.getInstance(project).getUserInfoList();
-            for (UserInfo userInfo : userInfoList) {
-                userTableModel.addRow(new String[]{userInfo.getKey(), userInfo.getRoleName()});
+        if (!refresh) {
+            if (ObjectUtils.isEmpty(DataCenter.getInstance(project).getUserInfoList())) {
+                UserInfo userInfo = new UserInfo("super-admin", "超级管理员", UserPermissionUtil.parsePermissionTreeToString(treeRoot));
+                DataCenter.getInstance(project).getUserInfoList().add(userInfo);
+                userTableModel.addRow(new String[]{"super-admin", "超级管理员"});
+                SELECTED_USER_INFO = userInfo;
+            } else {
+                List<UserInfo> userInfoList = DataCenter.getInstance(project).getUserInfoList();
+                for (UserInfo userInfo : userInfoList) {
+                    userTableModel.addRow(new String[]{userInfo.getKey(), userInfo.getRoleName()});
+                }
+                SELECTED_USER_INFO = userInfoList.get(0);
+                UserPermissionUtil.parseStringToPermissionTree(SELECTED_USER_INFO.getNodeHashCodeToSelectMap(), treeRoot);
             }
-            SELECTED_USER_INFO = userInfoList.get(0);
-            UserPermissionUtil.parseStringToPermissionTree(SELECTED_USER_INFO.getNodeHashCodeToSelectMap(), treeRoot);
         }
         // 面板展示用的树
         roleTreeModel.setRoot(treeRoot);
         roleTreeModel.reload();
         permissionTree.repaint();
         // 默认选中userTable的第一行
-        userTable.setRowSelectionInterval(0, 0);
+        if (userTableModel.getRowCount() > 0) {
+            userTable.setRowSelectionInterval(0, 0);
+        }
     }
 
     /**
@@ -400,13 +405,23 @@ public class LatiasToolWindow {
      * @return 树
      */
     private CheckBoxTreeNode<String> generateTreeRoot(Map<PsiElement, List<RuleInfo>> map, boolean changeTree) {
+        // 对map的key进行排序,转换成PsiClass，取Name，然后升序
+        List<PsiElement> psiElementList = new LinkedList<>(map.keySet());
+        psiElementList.sort(Comparator.comparing(o -> ((PsiClass) o).getName()));
+
         AtomicInteger elementCount = new AtomicInteger();
         CheckBoxTreeNode<String> root = new CheckBoxTreeNode<>("Not found any controller");
-        for (Map.Entry<PsiElement, List<RuleInfo>> entry : map.entrySet()) {
-            PsiClass restClass = (PsiClass) entry.getKey();
+        for (PsiElement psiElement : psiElementList) {
+            PsiClass restClass = (PsiClass) psiElement;
+            List<RuleInfo> ruleInfos = map.get(psiElement);
+            if (ObjectUtils.isEmpty(ruleInfos)) {
+                ruleInfos = new LinkedList<>();
+            }
+            // 根据方法名排序
+            ruleInfos.sort(Comparator.comparing(o -> ((PsiMethod) o.getMethodPsiElement()).getName()));
             // 设置 class 节点
-            RestElementNode restElementNode = new RestElementNode(new CategoryTree(restClass.getName(), entry.getValue().size(), restClass));
-            entry.getValue().forEach(ruleInfo -> {
+            RestElementNode restElementNode = new RestElementNode(new CategoryTree(restClass.getName(), ruleInfos.size(), restClass));
+            ruleInfos.forEach(ruleInfo -> {
                 // 添加 controller 节点
                 restElementNode.add(new ControllerElementNode(ruleInfo));
                 elementCount.incrementAndGet();
