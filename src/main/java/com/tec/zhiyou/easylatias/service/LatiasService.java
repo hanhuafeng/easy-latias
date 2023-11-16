@@ -80,7 +80,7 @@ public class LatiasService implements Serializable {
                             }
                         }
                         PsiAnnotation[] annotations = method.getAnnotations();
-                        if (!ArrayUtils.isEmpty(annotations)) {
+                        if (!ObjectUtils.isEmpty(annotations)) {
                             for (PsiAnnotation psiAnnotation : annotations) {
                                 if (Objects.equals(psiAnnotation.getQualifiedName(), Annotation.DELETE_MAPPING.getQualifiedName())) {
                                     ruleInfo.setAnnotation(Annotation.DELETE_MAPPING);
@@ -156,7 +156,7 @@ public class LatiasService implements Serializable {
             return nodeClazz != null;
         } else if (psiElement instanceof PsiMethod psiMethod) {
             PsiAnnotation[] annotations = psiMethod.getAnnotations();
-            if (ArrayUtils.isEmpty(annotations)) {
+            if (ObjectUtils.isEmpty(annotations)) {
                 return false;
             }
             for (PsiAnnotation psiAnnotation : annotations) {

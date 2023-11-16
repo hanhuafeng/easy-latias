@@ -33,7 +33,7 @@ public class GlobalConfigDialog extends DialogWrapper {
         this.project = project;
         String defaultZone = DataCenter.getInstance(project).getBaseConfig().getLatiasDefaultZone();
         if (ObjectUtils.isEmpty(defaultZone)) {
-            this.defaultZone = "https://latias.zhiyou-tec.com/api/v1";
+            this.defaultZone = "";
         } else {
             this.defaultZone = defaultZone;
         }

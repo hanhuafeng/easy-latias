@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "com.tec.zhiyou"
-version = "1.0.1-SNAPSHOT"
+version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -62,7 +62,7 @@ tasks {
     }
 
     publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+        token.set(properties("platformPlugins"))
     }
     buildSearchableOptions {
         enabled = false
