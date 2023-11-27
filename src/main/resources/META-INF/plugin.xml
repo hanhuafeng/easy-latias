@@ -7,7 +7,7 @@
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>Easy-Latias</name>
 
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="huafeng.han@zhiyou-tec.con" url="https://www.zhiyou-tec.com">智邮科技</vendor>

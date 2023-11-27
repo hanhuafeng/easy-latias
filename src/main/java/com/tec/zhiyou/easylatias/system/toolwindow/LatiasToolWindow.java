@@ -532,8 +532,8 @@ public class LatiasToolWindow {
             for (RuleInfo ruleInfo : value) {
                 String permissionsTemplate = "          - name: {{name}}\n            code: {{code}}";
                 String manuallyReportResourcesTemplate = """
-                              - path: {{restPath}}{{methodPath}}
-                                method: {{method}}\
+                                - path: {{restPath}}{{methodPath}}
+                                  method: {{method}}\
                         """;
                 String permission = ruleInfo.getDocComment();
                 if (ObjectUtils.isEmpty(permission)) {
