@@ -10,22 +10,22 @@ public class YamlTemplate {
      */
     public static String LATIAS_YAML_TEMPLATE_1_1_74 = """
               latias:
-                  # 注册到latias；true：注册，false：不注册
-                  register-with-latias: ${REGISTER_WITH_LATIAS:true}
-                  interceptor-strategy: ${INTERCEPTOR_STRATEGY:allowed}
-                  service-url:
-                    default-zone: ${SERVICE_URL:{{defaultZone}}}
-                  client:
-                    id: ${CLIENT_ID:{{clientId}}}
-                    secret: ${CLIENT_SECRET:{{clientSecret}}}
-                  relation-configuration:
-                    # 角色权限关联关系
-                    role:
+                # 注册到latias；true：注册，false：不注册
+                register-with-latias: ${REGISTER_WITH_LATIAS:true}
+                interceptor-strategy: ${INTERCEPTOR_STRATEGY:allowed}
+                service-url:
+                  default-zone: ${SERVICE_URL:{{defaultZone}}}
+                client:
+                  id: ${CLIENT_ID:{{clientId}}}
+                  secret: ${CLIENT_SECRET:{{clientSecret}}}
+                relation-configuration:
+                  # 角色权限关联关系
+                  role:
               {{roleList}}
-                    permission:
+                  permission:
               {{permissionList}}
                   manually-report-resources:
               {{manuallyReportResources}}
-                  white-list:
-                    - path: /**""";
+                white-list:
+                  - path: /**""";
 }

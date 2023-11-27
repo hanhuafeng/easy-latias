@@ -32,17 +32,21 @@
     <change-notes>
         <![CDATA[
         <h4>1.0.1</h4>
-            <ul>
-                <li>[FEATURE] Add global configuration</li>
-                <li>Fix the issue of Module Path not being able to store in FIX</li>
-            </ul>
+        <ul>
+            <li>[FEATURE] Add global configuration</li>
+            <li>Fix the issue of Module Path not being able to store in FIX</li>
+        </ul>
         <h4>1.0.2</h4>
-            <ul>
-                <li>Fix the issue of unable to reload doc with FIX</li>
-                <li>[FEATURE] Update plugin ICON</li>
-                <li>[FEATURE] Adjust an API in version 1.0.1 that will be removed in the future</li>
-                <li>Problem of adjusting interface and class sorting</li>
-            </ul>
+        <ul>
+            <li>Fix the issue of unable to reload doc with FIX</li>
+            <li>[FEATURE] Update plugin ICON</li>
+            <li>[FEATURE] Adjust an API in version 1.0.1 that will be removed in the future</li>
+            <li>Problem of adjusting interface and class sorting</li>
+        </ul>
+        <h4>1.0.3</h4>
+        <ul>
+            <li>Fix the issue of unable to reload doc with FIX</li>
+        </ul>
         <h4>1.0.1</h4>
         <ul>
             <li>【FEATURE】新增全局配置</li>
@@ -54,6 +58,11 @@
             <li>【FEATURE】更新插件ICON</li>
             <li>【FEATURE】调整1.0.1版本中一个在未来会被移除的api</li>
             <li>【FEATURE】调整接口、类排序的问题</li>
+        </ul>
+        <h4>1.0.3</h4>
+        <ul>
+            <li>【FIX】修复角色列表无法删除无效的问题</li>
+            <li>【FEATURE】优化yaml生成结构</li>
         </ul>
         ]]>
     </change-notes>

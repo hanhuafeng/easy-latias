@@ -505,9 +505,9 @@ public class LatiasToolWindow {
         // 取权限
         for (Map.Entry<PsiElement, List<RuleInfo>> entry : elements.entrySet()) {
             String permissionTemplate = """
-                            {{key}}:\s
-                              name: {{name}}\s
-                              permissions:\s
+                          {{key}}:\s
+                            name: {{name}}\s
+                            permissions:\s
                     {{permissions}}""";
             PsiClass restClass = (PsiClass) entry.getKey();
             String key = restClass.getName();
@@ -530,10 +530,10 @@ public class LatiasToolWindow {
             List<String> permissionsTempList = new LinkedList<>();
             List<RuleInfo> value = entry.getValue();
             for (RuleInfo ruleInfo : value) {
-                String permissionsTemplate = "            - name: {{name}}\n              code: {{code}}";
+                String permissionsTemplate = "          - name: {{name}}\n            code: {{code}}";
                 String manuallyReportResourcesTemplate = """
-                                - path: {{restPath}}{{methodPath}}
-                                  method: {{method}}\
+                              - path: {{restPath}}{{methodPath}}
+                                method: {{method}}\
                         """;
                 String permission = ruleInfo.getDocComment();
                 if (ObjectUtils.isEmpty(permission)) {
@@ -577,12 +577,12 @@ public class LatiasToolWindow {
         List<String> userRoleTempList = new LinkedList<>();
         for (UserInfo userInfo : userInfoList) {
             String roleTemplate = """
-                            {{key}}:\s
-                              name: {{roleName}}
-                              permission:
-                    {{permission}}\
-                    """;
-            String permission = "              all";
+                        {{key}}:\s
+                          name: {{roleName}}
+                          permission:
+                  {{permission}}\
+                  """;
+            String permission = "          all";
             UserPermissionUtil.parseStringToPermissionTree(userInfo.getNodeHashCodeToSelectMap(), treeRoot);
             Enumeration<TreeNode> children = treeRoot.children();
             // 如果第一层都选中了，则permission=all
@@ -633,7 +633,7 @@ public class LatiasToolWindow {
         String className = restElement.getData().getCategoryName();
         PsiMethod methodPsiElement = (PsiMethod) controllerElementNode.getData().getMethodPsiElement();
         String methodName = methodPsiElement.getName();
-        String permissionTemplate = "            - {{className}}:{{methodName}}";
+        String permissionTemplate = "          - {{className}}:{{methodName}}";
         permissionTemplate = permissionTemplate.replace("{{className}}", className)
                 .replace("{{methodName}}", methodName);
         return permissionTemplate;

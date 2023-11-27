@@ -109,6 +109,8 @@ public class UserTablePopMenu extends JPopupMenu {
             int selectedRow = userTable.getSelectedRow();
             // 从数据中心删除
             userTableModel.removeRow(selectedRow);
+            // 数据中心中的userInfoList中移除当前选中的角色
+            DataCenter.getInstance(project).getUserInfoList().remove(selectedRow);
         });
         this.add(addUserItem);
         this.add(delUserItem);
