@@ -505,9 +505,9 @@ public class LatiasToolWindow {
         // 取权限
         for (Map.Entry<PsiElement, List<RuleInfo>> entry : elements.entrySet()) {
             String permissionTemplate = """
-                          {{key}}:\s
-                            name: {{name}}\s
-                            permissions:\s
+                          {{key}}:
+                            name: {{name}}
+                            permissions:
                     {{permissions}}""";
             PsiClass restClass = (PsiClass) entry.getKey();
             String key = restClass.getName();
@@ -577,7 +577,7 @@ public class LatiasToolWindow {
         List<String> userRoleTempList = new LinkedList<>();
         for (UserInfo userInfo : userInfoList) {
             String roleTemplate = """
-                        {{key}}:\s
+                        {{key}}:
                           name: {{roleName}}
                           permission:
                   {{permission}}\
