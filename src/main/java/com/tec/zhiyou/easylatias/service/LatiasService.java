@@ -1,26 +1,19 @@
 package com.tec.zhiyou.easylatias.service;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomService;
 import com.tec.zhiyou.easylatias.annotation.Annotation;
 import com.tec.zhiyou.easylatias.domain.RuleInfo;
 import com.tec.zhiyou.easylatias.util.PsiDocCommentUtil;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author : hanhuafeng
@@ -97,6 +90,55 @@ public class LatiasService implements Serializable {
                         }
                         psiElements.add(ruleInfo);
                     }
+                }
+            }
+            result.put(psiElement, psiElements);
+        }
+
+        return result;
+    }
+
+    /**
+     * 获取所有的Rayquaza的 Export 注解
+     *
+     * @return
+     */
+    public Map<PsiElement, List<RuleInfo>> findAllRayquazaExport() {
+        Map<PsiElement, List<RuleInfo>> result = new LinkedHashMap<>();
+        Collection<PsiClass> rayquazaExportComponents = javaService.getClassesByAnnotationQualifiedName(Annotation.RAYQUAZA_EXPORT.getQualifiedName());
+        PsiElement[] temp = rayquazaExportComponents.stream().distinct().toArray(PsiElement[]::new);
+        for (PsiElement psiElement : temp) {
+            List<RuleInfo> psiElements = new LinkedList<>();
+            if (psiElement instanceof PsiClass psiClass) {
+                // Rayquaza Export比较特殊，在类上，类似@Export(path = "roles", create = true, update = true)
+                PsiAnnotation[] annotations = psiClass.getAnnotations();
+                if (!ObjectUtils.isEmpty(annotations)) {
+                    AtomicReference<PsiAnnotation> rayquazaExportAnnotation = null;
+                    Arrays.stream(annotations).filter(item -> Objects.equals(item.getQualifiedName(), Annotation.RAYQUAZA_EXPORT.getQualifiedName())).findFirst().ifPresent(item -> rayquazaExportAnnotation.set(item));
+                    if (ObjectUtils.isEmpty(rayquazaExportAnnotation)) {
+                        continue;
+                    }
+                    PsiAnnotationMemberValue path = rayquazaExportAnnotation.get().findAttributeValue("path");
+                    PsiAnnotationMemberValue page = rayquazaExportAnnotation.get().findAttributeValue("page");
+                    PsiAnnotationMemberValue create = rayquazaExportAnnotation.get().findAttributeValue("create");
+                    PsiAnnotationMemberValue update = rayquazaExportAnnotation.get().findAttributeValue("update");
+                    PsiAnnotationMemberValue delete = rayquazaExportAnnotation.get().findAttributeValue("delete");
+                    PsiAnnotationMemberValue single = rayquazaExportAnnotation.get().findAttributeValue("single");
+                    RuleInfo ruleInfo = new RuleInfo();
+                    ruleInfo.setAnnotation(Annotation.RAYQUAZA_EXPORT);
+                    ruleInfo.setPsiClass(psiClass);
+                    ruleInfo.setMethodPsiElement(psiClass);
+                    ruleInfo.setDocComment("");
+                    PsiDocComment docComment = psiClass.getDocComment();
+                    if (ObjectUtils.isNotEmpty(docComment)) {
+                        StringBuilder doc = PsiDocCommentUtil.getDoc(docComment);
+                        if (ObjectUtils.isNotEmpty(doc.toString())) {
+                            String s = doc.toString().strip().replaceAll("\n", "");
+                            System.out.println(psiClass.getName() + ":" + s);
+                            ruleInfo.setDocComment(s);
+                        }
+                    }
+                    psiElements.add(ruleInfo);
                 }
             }
             result.put(psiElement, psiElements);

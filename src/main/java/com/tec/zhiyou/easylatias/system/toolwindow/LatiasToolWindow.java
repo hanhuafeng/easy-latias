@@ -29,7 +29,6 @@ import com.tec.zhiyou.easylatias.system.toolwindow.tree.render.CheckBoxTreeCellR
 import com.tec.zhiyou.easylatias.util.AsyncUtils;
 import com.tec.zhiyou.easylatias.util.PsiDocCommentUtil;
 import com.tec.zhiyou.easylatias.util.UserPermissionUtil;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +39,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileWriter;
@@ -164,7 +161,7 @@ public class LatiasToolWindow {
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
                     // 右键，则打开一个右键菜单
-                    UserTablePopMenu userTablePopMenu = new UserTablePopMenu(project, userTable, generateTreeRoot(elements, false), userTableModel, roleTreeModel);
+                    UserTablePopMenu userTablePopMenu = new UserTablePopMenu(project, userTable, generateTreeRoot(elements), userTableModel, roleTreeModel);
                     userTablePopMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
@@ -233,7 +230,7 @@ public class LatiasToolWindow {
         for (Map.Entry<String, List<String>> entry : manuallyReportResourcesTempMap.entrySet()) {
             String key = entry.getKey();
             List<String> value = entry.getValue();
-            String manuallyReportResourcesTemplate = "      {{key}}: \n{{value}}";
+            String manuallyReportResourcesTemplate = "    {{key}}: \n{{value}}";
             manuallyReportResourcesTemplate = manuallyReportResourcesTemplate.replace("{{key}}", key)
                     .replace("{{value}}", String.join("\n", value));
             manuallyReportResourcesTempList.add(manuallyReportResourcesTemplate);
@@ -371,7 +368,7 @@ public class LatiasToolWindow {
      */
     public void renderTree(@NotNull Map<PsiElement, List<RuleInfo>> map, boolean refresh) {
         this.elements = map;
-        treeRoot = generateTreeRoot(map, true);
+        treeRoot = generateTreeRoot(map);
         if (!refresh) {
             if (ObjectUtils.isEmpty(DataCenter.getInstance(project).getUserInfoList())) {
                 UserInfo userInfo = new UserInfo("super-admin", "超级管理员", UserPermissionUtil.parsePermissionTreeToString(treeRoot));
@@ -400,11 +397,10 @@ public class LatiasToolWindow {
     /**
      * 生成树
      *
-     * @param map        map
-     * @param changeTree 是否改变树
+     * @param map map
      * @return 树
      */
-    private CheckBoxTreeNode<String> generateTreeRoot(Map<PsiElement, List<RuleInfo>> map, boolean changeTree) {
+    private CheckBoxTreeNode<String> generateTreeRoot(Map<PsiElement, List<RuleInfo>> map) {
         // 对map的key进行排序,转换成PsiClass，取Name，然后升序
         List<PsiElement> psiElementList = new LinkedList<>(map.keySet());
         psiElementList.sort(Comparator.comparing(o -> ((PsiClass) o).getName()));
@@ -428,10 +424,8 @@ public class LatiasToolWindow {
             });
             root.add(restElementNode);
         }
-        if (changeTree) {
-            permissionTree.firePropertyChange(JTree.ROOT_VISIBLE_PROPERTY, permissionTree.isRootVisible(), elementCount.get() < 1);
-            permissionTree.setEnabled(elementCount.get() > 0);
-        }
+        permissionTree.firePropertyChange(JTree.ROOT_VISIBLE_PROPERTY, permissionTree.isRootVisible(), elementCount.get() < 1);
+        permissionTree.setEnabled(elementCount.get() > 0);
         return root;
     }
 
@@ -532,8 +526,8 @@ public class LatiasToolWindow {
             for (RuleInfo ruleInfo : value) {
                 String permissionsTemplate = "          - name: {{name}}\n            code: {{code}}";
                 String manuallyReportResourcesTemplate = """
-                                - path: {{restPath}}{{methodPath}}
-                                  method: {{method}}\
+                              - path: {{restPath}}{{methodPath}}
+                                method: {{method}}\
                         """;
                 String permission = ruleInfo.getDocComment();
                 if (ObjectUtils.isEmpty(permission)) {
@@ -577,11 +571,11 @@ public class LatiasToolWindow {
         List<String> userRoleTempList = new LinkedList<>();
         for (UserInfo userInfo : userInfoList) {
             String roleTemplate = """
-                        {{key}}:
-                          name: {{roleName}}
-                          permission:
-                  {{permission}}\
-                  """;
+                          {{key}}:
+                            name: {{roleName}}
+                            permission:
+                    {{permission}}\
+                    """;
             String permission = "          all";
             UserPermissionUtil.parseStringToPermissionTree(userInfo.getNodeHashCodeToSelectMap(), treeRoot);
             Enumeration<TreeNode> children = treeRoot.children();

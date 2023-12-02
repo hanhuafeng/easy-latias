@@ -22,9 +22,9 @@ public class YamlTemplate {
                   # 角色权限关联关系
                   role:
               {{roleList}}
-                  permission:
+                permission:
               {{permissionList}}
-                  manually-report-resources:
+                manually-report-resources:
               {{manuallyReportResources}}
                 white-list:
                   - path: /**""";

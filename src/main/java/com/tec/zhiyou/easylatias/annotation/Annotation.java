@@ -47,6 +47,14 @@ public class Annotation implements Cloneable {
             "org.springframework.web.bind.annotation.PutMapping",
             LatiasIcons.PUT_ICON,
             HttpMethod.PUT);
+
+    /**
+     * RAYQUAZA的 Export 注解
+     */
+    public static final Annotation RAYQUAZA_EXPORT = new Annotation("@Export",
+            "org.fatewa.engine.genius.annotations.Export",
+            null,
+            null);
     private final String label;
 
     private final String qualifiedName;
