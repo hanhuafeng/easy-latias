@@ -3,6 +3,7 @@ package com.tec.zhiyou.easylatias.domain;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.tec.zhiyou.easylatias.annotation.Annotation;
+import com.tec.zhiyou.easylatias.domain.enums.TypeEnum;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -36,6 +37,25 @@ public class RuleInfo {
      */
     private PsiClass psiClass;
 
+    /**
+     * Rayquaza代码规则信息
+     */
+    private RayquazaRuleInfoDetail rayquazaRuleInfoDetail;
+
+    /**
+     * 类型
+     */
+    private TypeEnum typeEnum;
+
+    public RuleInfo() {
+    }
+
+    public RuleInfo(PsiElement methodPsiElement, Annotation annotation, String docComment, PsiClass psiClass) {
+        this.methodPsiElement = methodPsiElement;
+        this.annotation = annotation;
+        this.docComment = docComment;
+        this.psiClass = psiClass;
+    }
 
     public PsiElement getMethodPsiElement() {
         return methodPsiElement;
@@ -84,29 +104,31 @@ public class RuleInfo {
      * @return hashCode
      */
     public String getHashCode() {
-        PsiMethod psiMethod = (PsiMethod) methodPsiElement;
         String requestPath = "";
-        PsiAnnotation[] annotations = psiMethod.getAnnotations();
-        for (PsiAnnotation annotation : annotations) {
-            if (ObjectUtils.isEmpty(annotation)) {
-                continue;
+        String methodName;
+        if (this.getTypeEnum() == TypeEnum.NORMAL) {
+            PsiMethod psiMethod = (PsiMethod) methodPsiElement;
+            PsiAnnotation[] annotations = psiMethod.getAnnotations();
+            for (PsiAnnotation annotation : annotations) {
+                if (ObjectUtils.isEmpty(annotation)) {
+                    continue;
+                }
+                String qualifiedName = annotation.getQualifiedName();
+                PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
+                if (Objects.equals(annotation.getQualifiedName(), qualifiedName) && ObjectUtils.isNotEmpty(psiAnnotationMemberValue)) {
+                    requestPath = psiAnnotationMemberValue.getText();
+                    break;
+                }
             }
-            String qualifiedName = annotation.getQualifiedName();
-            PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
-            if (Objects.equals(annotation.getQualifiedName(), qualifiedName) && ObjectUtils.isNotEmpty(psiAnnotationMemberValue)) {
-                requestPath = psiAnnotationMemberValue.getText();
-                break;
-            }
+            methodName = psiMethod.getName();
+            requestPath = requestPath.replaceAll("\"", "");
+        } else {
+            methodName = this.psiClass.getName();
+            requestPath = this.rayquazaRuleInfoDetail.getPath();
         }
-        requestPath = requestPath.replaceAll("\"", "");
-//        return Md5Crypt.md5Crypt(String.format("%s.%s:%s:%s",
-//                psiClass.getQualifiedName(),
-//                psiMethod.getName(),
-//                requestPath,
-//                annotation.getHttpMethod().name()).getBytes());
         return String.format("%s.%s:%s:%s",
                 psiClass.getQualifiedName(),
-                psiMethod.getName(),
+                methodName,
                 requestPath,
                 annotation.getHttpMethod().name());
     }
@@ -116,6 +138,22 @@ public class RuleInfo {
             return annotation.getIcon();
         }
         return null;
+    }
+
+    public TypeEnum getTypeEnum() {
+        return typeEnum;
+    }
+
+    public void setTypeEnum(TypeEnum typeEnum) {
+        this.typeEnum = typeEnum;
+    }
+
+    public RayquazaRuleInfoDetail getRayquazaRuleInfoDetail() {
+        return rayquazaRuleInfoDetail;
+    }
+
+    public void setRayquazaRuleInfoDetail(RayquazaRuleInfoDetail rayquazaRuleInfoDetail) {
+        this.rayquazaRuleInfoDetail = rayquazaRuleInfoDetail;
     }
 
     /**

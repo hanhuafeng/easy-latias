@@ -18,6 +18,8 @@ import com.tec.zhiyou.easylatias.annotation.Annotation;
 import com.tec.zhiyou.easylatias.data.DataCenter;
 import com.tec.zhiyou.easylatias.domain.RuleInfo;
 import com.tec.zhiyou.easylatias.domain.UserInfo;
+import com.tec.zhiyou.easylatias.domain.enums.HttpMethod;
+import com.tec.zhiyou.easylatias.domain.enums.TypeEnum;
 import com.tec.zhiyou.easylatias.domain.template.YamlTemplate;
 import com.tec.zhiyou.easylatias.service.LatiasService;
 import com.tec.zhiyou.easylatias.system.toolwindow.listener.CheckBoxTreeNodeSelectionListener;
@@ -414,8 +416,17 @@ public class LatiasToolWindow {
                 ruleInfos = new LinkedList<>();
             }
             // 根据方法名排序
-            ruleInfos.sort(Comparator.comparing(o -> ((PsiMethod) o.getMethodPsiElement()).getName()));
-            // 设置 class 节点
+            ruleInfos.sort(Comparator.comparing(o -> {
+                String name = "";
+                if (o.getTypeEnum() == TypeEnum.NORMAL) {
+                    PsiMethod methodPsiElement = (PsiMethod) o.getMethodPsiElement();
+                    name = methodPsiElement.getName();
+                } else if (o.getTypeEnum() == TypeEnum.RAYQUAZA) {
+                    name = o.getPsiClass().getName();
+                }
+                return name;
+            }));
+            // 设置 正常class 节点
             RestElementNode restElementNode = new RestElementNode(new CategoryTree(restClass.getName(), ruleInfos.size(), restClass));
             ruleInfos.forEach(ruleInfo -> {
                 // 添加 controller 节点
@@ -533,28 +544,42 @@ public class LatiasToolWindow {
                 if (ObjectUtils.isEmpty(permission)) {
                     continue;
                 }
-                PsiMethod methodPsiElement = (PsiMethod) ruleInfo.getMethodPsiElement();
-                String psiMethodPath = getPsiMethodPath(methodPsiElement, ruleInfo.getAnnotation());
-                if ("{}".equals(psiMethodPath)) {
-                    psiMethodPath = "";
-                }
-                if (ObjectUtils.isEmpty(psiMethodPath) && ObjectUtils.isNotEmpty(restPath) && restPath.endsWith("/")) {
-                    // 移除最后一个/
-                    restPath = restPath.substring(0, restPath.length() - 1);
-                }
-                if (restPath.endsWith("/") && psiMethodPath.startsWith("/")) {
-                    psiMethodPath = psiMethodPath.substring(1);
+                String methodName = "";
+                String methodPath = "";
+                if (ruleInfo.getTypeEnum() == TypeEnum.NORMAL) {
+                    PsiMethod methodPsiElement = (PsiMethod) ruleInfo.getMethodPsiElement();
+                    String psiMethodPath = getPsiMethodPath(methodPsiElement, ruleInfo.getAnnotation());
+                    if ("{}".equals(psiMethodPath)) {
+                        psiMethodPath = "";
+                    }
+                    if (ObjectUtils.isEmpty(psiMethodPath) && ObjectUtils.isNotEmpty(restPath) && restPath.endsWith("/")) {
+                        // 移除最后一个/
+                        restPath = restPath.substring(0, restPath.length() - 1);
+                    }
+                    if (restPath.endsWith("/") && psiMethodPath.startsWith("/")) {
+                        psiMethodPath = psiMethodPath.substring(1);
+                    }
+                    methodName = methodPsiElement.getName();
+                    methodPath = psiMethodPath;
+                } else if (ruleInfo.getTypeEnum() == TypeEnum.RAYQUAZA) {
+                    permission = permission + ":" + ruleInfo.getAnnotation().getHttpMethod().name();
+                    methodPath = ruleInfo.getRayquazaRuleInfoDetail().getPath();
+                    methodName = ruleInfo.getAnnotation().getHttpMethod().name();
                 }
                 permissionsTemplate = permissionsTemplate.replace("{{name}}", permission)
-                        .replace("{{code}}", methodPsiElement.getName());
+                        .replace("{{code}}", methodName);
                 // 渲染上报的资源文本
                 //{{restName}}:{{methodName}}:\s
-                String manuallyReportResourcesKey = key + ":" + methodPsiElement.getName();
+                String method = ruleInfo.getAnnotation().getHttpMethod().name();
+                if (ruleInfo.getAnnotation().getHttpMethod() == HttpMethod.SINGLE) {
+                    method = HttpMethod.GET.name();
+                }
+                String manuallyReportResourcesKey = key + ":" + methodName;
                 manuallyReportResourcesTemplate = manuallyReportResourcesTemplate.replace("{{restName}}", key)
-                        .replace("{{methodName}}", methodPsiElement.getName())
+                        .replace("{{methodName}}", methodName)
                         .replace("{{restPath}}", restPath)
-                        .replace("{{methodPath}}", psiMethodPath)
-                        .replace("{{method}}", ruleInfo.getAnnotation().getHttpMethod().name());
+                        .replace("{{methodPath}}", methodPath)
+                        .replace("{{method}}", method);
                 permissionsTempList.add(permissionsTemplate);
                 manuallyReportResourcesTempMap.computeIfAbsent(manuallyReportResourcesKey, k -> new LinkedList<>()).add(manuallyReportResourcesTemplate);
             }
@@ -625,8 +650,14 @@ public class LatiasToolWindow {
     @NotNull
     private static String getPermissionString(RestElementNode restElement, ControllerElementNode controllerElementNode) {
         String className = restElement.getData().getCategoryName();
-        PsiMethod methodPsiElement = (PsiMethod) controllerElementNode.getData().getMethodPsiElement();
-        String methodName = methodPsiElement.getName();
+        RuleInfo data = controllerElementNode.getData();
+        String methodName = "";
+        if (data.getTypeEnum() == TypeEnum.NORMAL) {
+            PsiMethod methodPsiElement = (PsiMethod) controllerElementNode.getData().getMethodPsiElement();
+            methodName = methodPsiElement.getName();
+        } else {
+            methodName = data.getAnnotation().getHttpMethod().name();
+        }
         String permissionTemplate = "          - {{className}}:{{methodName}}";
         permissionTemplate = permissionTemplate.replace("{{className}}", className)
                 .replace("{{methodName}}", methodName);

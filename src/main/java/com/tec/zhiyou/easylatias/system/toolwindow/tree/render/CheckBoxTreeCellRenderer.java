@@ -1,7 +1,9 @@
 package com.tec.zhiyou.easylatias.system.toolwindow.tree.render;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.tec.zhiyou.easylatias.domain.RuleInfo;
+import com.tec.zhiyou.easylatias.domain.enums.TypeEnum;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.*;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.checkbox.CheckBoxTreeLabel;
 import com.tec.zhiyou.easylatias.system.toolwindow.tree.checkbox.CheckBoxTreeNode;
@@ -52,9 +54,13 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
             ControllerElementNode node = (ControllerElementNode) value;
             RuleInfo data = node.getData();
             label.setIcon(data.getIcon());
-            PsiMethod methodPsiElement = (PsiMethod) data.getMethodPsiElement();
-            String subName = data.getDocComment();
-            label.setText(methodPsiElement.getName()+" - " + subName);
+            if (data.getTypeEnum() == TypeEnum.NORMAL) {
+                PsiMethod methodPsiElement = (PsiMethod) data.getMethodPsiElement();
+                String subName = data.getDocComment();
+                label.setText(methodPsiElement.getName() + " - " + subName);
+            } else if (data.getTypeEnum() == TypeEnum.RAYQUAZA) {
+                label.setText(data.getAnnotation().getHttpMethod().name() + "-" + data.getRayquazaRuleInfoDetail().getPath());
+            }
         } else {
             CheckBoxTreeNode<?> node = (CheckBoxTreeNode<?>) value;
             label.setText(node.toString());

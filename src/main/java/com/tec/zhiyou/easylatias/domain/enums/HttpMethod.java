@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public enum HttpMethod {
     GET,
+    SINGLE,
     HEAD,
     POST,
     PUT,

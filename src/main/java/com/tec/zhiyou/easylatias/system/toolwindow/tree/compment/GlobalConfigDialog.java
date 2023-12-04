@@ -23,10 +23,15 @@ public class GlobalConfigDialog extends DialogWrapper {
     private String clientId;
 
     private String clientSecret;
+    /**
+     * rayquaza生成接口的根路径
+     */
+    private String rayquazaRoot;
 
-    private EditorTextField defaultZoneTextField;
-    private EditorTextField clientIdTextField;
-    private EditorTextField clientSecretTextField;
+    private final EditorTextField defaultZoneTextField;
+    private final EditorTextField clientIdTextField;
+    private final EditorTextField clientSecretTextField;
+    private final EditorTextField rayquazaRootTextField;
 
     public GlobalConfigDialog(Project project) {
         super(true);
@@ -47,12 +52,19 @@ public class GlobalConfigDialog extends DialogWrapper {
             clientSecret = "";
         }
         this.clientSecret = clientSecret;
+        String rayquazaRoot = DataCenter.getInstance(project).getBaseConfig().getRayquazaRoot();
+        if (ObjectUtils.isEmpty(rayquazaRoot)) {
+            rayquazaRoot = "";
+        }
+        this.rayquazaRoot = rayquazaRoot;
         defaultZoneTextField = new EditorTextField(this.defaultZone);
         clientIdTextField = new EditorTextField(this.clientId);
         clientSecretTextField = new EditorTextField(this.clientSecret);
+        rayquazaRootTextField = new EditorTextField(this.rayquazaRoot);
         defaultZoneTextField.setPreferredWidth(200);
         clientIdTextField.setPreferredWidth(200);
         clientSecretTextField.setPreferredWidth(200);
+        rayquazaRootTextField.setPreferredWidth(200);
         init();
         setTitle("全局配置");
     }
@@ -64,13 +76,15 @@ public class GlobalConfigDialog extends DialogWrapper {
 
     @Override
     protected JComponent createCenterPanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 2));
+        JPanel panel = new JPanel(new GridLayout(4, 2));
         panel.add(new JLabel("请求路径"));
         panel.add(defaultZoneTextField);
         panel.add(new JLabel("clientId"));
         panel.add(clientIdTextField);
         panel.add(new JLabel("clientSecret"));
         panel.add(clientSecretTextField);
+        panel.add(new JLabel("rayquazaRoot"));
+        panel.add(rayquazaRootTextField);
         return panel;
     }
 
@@ -85,9 +99,11 @@ public class GlobalConfigDialog extends DialogWrapper {
             this.defaultZone = defaultZoneTextField.getText();
             this.clientId = clientIdTextField.getText();
             this.clientSecret = clientSecretTextField.getText();
+            this.rayquazaRoot = rayquazaRootTextField.getText();
             DataCenter.getInstance(project).getBaseConfig().setLatiasDefaultZone(this.defaultZone);
             DataCenter.getInstance(project).getBaseConfig().setClientId(this.clientId);
             DataCenter.getInstance(project).getBaseConfig().setClientSecret(this.clientSecret);
+            DataCenter.getInstance(project).getBaseConfig().setRayquazaRoot(this.rayquazaRoot);
             this.close(0);
         });
         cancelBtn.addActionListener(e -> {

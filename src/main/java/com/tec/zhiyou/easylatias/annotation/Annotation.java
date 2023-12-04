@@ -2,6 +2,7 @@ package com.tec.zhiyou.easylatias.annotation;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -48,12 +49,16 @@ public class Annotation implements Cloneable {
             LatiasIcons.PUT_ICON,
             HttpMethod.PUT);
 
+    public static final Annotation SINGLE = new Annotation("@GetMapping",
+            "org.springframework.web.bind.annotation.RequestBody",
+            LatiasIcons.GET_ICON,
+            HttpMethod.SINGLE);
     /**
      * RAYQUAZA的 Export 注解
      */
     public static final Annotation RAYQUAZA_EXPORT = new Annotation("@Export",
             "org.fatewa.engine.genius.annotations.Export",
-            null,
+            AllIcons.Nodes.Favorite,
             null);
     private final String label;
 

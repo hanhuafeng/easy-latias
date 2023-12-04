@@ -25,6 +25,11 @@ public class BaseConfig {
      */
     private String clientSecret;
 
+    /**
+     * rayquaza root
+     */
+    private String rayquazaRoot;
+
     public BaseConfig() {
         this.moduleName = "";
         this.latiasDefaultZone = "";
@@ -62,5 +67,13 @@ public class BaseConfig {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public String getRayquazaRoot() {
+        return rayquazaRoot;
+    }
+
+    public void setRayquazaRoot(String rayquazaRoot) {
+        this.rayquazaRoot = rayquazaRoot;
     }
 }

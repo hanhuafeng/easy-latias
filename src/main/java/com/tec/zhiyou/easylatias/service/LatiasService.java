@@ -6,7 +6,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlTag;
 import com.tec.zhiyou.easylatias.annotation.Annotation;
+import com.tec.zhiyou.easylatias.data.DataCenter;
+import com.tec.zhiyou.easylatias.domain.RayquazaRuleInfoDetail;
 import com.tec.zhiyou.easylatias.domain.RuleInfo;
+import com.tec.zhiyou.easylatias.domain.enums.HttpMethod;
+import com.tec.zhiyou.easylatias.domain.enums.TypeEnum;
 import com.tec.zhiyou.easylatias.util.PsiDocCommentUtil;
 import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -88,13 +92,15 @@ public class LatiasService implements Serializable {
                                 }
                             }
                         }
+                        ruleInfo.setTypeEnum(TypeEnum.NORMAL);
                         psiElements.add(ruleInfo);
                     }
                 }
             }
             result.put(psiElement, psiElements);
         }
-
+        Map<PsiElement, List<RuleInfo>> allRayquazaExport = findAllRayquazaExport();
+        result.putAll(allRayquazaExport);
         return result;
     }
 
@@ -107,14 +113,25 @@ public class LatiasService implements Serializable {
         Map<PsiElement, List<RuleInfo>> result = new LinkedHashMap<>();
         Collection<PsiClass> rayquazaExportComponents = javaService.getClassesByAnnotationQualifiedName(Annotation.RAYQUAZA_EXPORT.getQualifiedName());
         PsiElement[] temp = rayquazaExportComponents.stream().distinct().toArray(PsiElement[]::new);
+        String rayquazaRoot = DataCenter.getInstance(project).getBaseConfig().getRayquazaRoot();
+        if (ObjectUtils.isEmpty(rayquazaRoot)) {
+            rayquazaRoot = "/";
+        } else {
+            if (!rayquazaRoot.startsWith("/")) {
+                rayquazaRoot = "/" + rayquazaRoot;
+            }
+            if (!rayquazaRoot.endsWith("/")) {
+                rayquazaRoot = rayquazaRoot + "/";
+            }
+        }
         for (PsiElement psiElement : temp) {
             List<RuleInfo> psiElements = new LinkedList<>();
             if (psiElement instanceof PsiClass psiClass) {
                 // Rayquaza Export比较特殊，在类上，类似@Export(path = "roles", create = true, update = true)
                 PsiAnnotation[] annotations = psiClass.getAnnotations();
                 if (!ObjectUtils.isEmpty(annotations)) {
-                    AtomicReference<PsiAnnotation> rayquazaExportAnnotation = null;
-                    Arrays.stream(annotations).filter(item -> Objects.equals(item.getQualifiedName(), Annotation.RAYQUAZA_EXPORT.getQualifiedName())).findFirst().ifPresent(item -> rayquazaExportAnnotation.set(item));
+                    AtomicReference<PsiAnnotation> rayquazaExportAnnotation = new AtomicReference<>(null);
+                    Arrays.stream(annotations).filter(item -> Objects.equals(item.getQualifiedName(), Annotation.RAYQUAZA_EXPORT.getQualifiedName())).findFirst().ifPresent(rayquazaExportAnnotation::set);
                     if (ObjectUtils.isEmpty(rayquazaExportAnnotation)) {
                         continue;
                     }
@@ -124,21 +141,72 @@ public class LatiasService implements Serializable {
                     PsiAnnotationMemberValue update = rayquazaExportAnnotation.get().findAttributeValue("update");
                     PsiAnnotationMemberValue delete = rayquazaExportAnnotation.get().findAttributeValue("delete");
                     PsiAnnotationMemberValue single = rayquazaExportAnnotation.get().findAttributeValue("single");
-                    RuleInfo ruleInfo = new RuleInfo();
-                    ruleInfo.setAnnotation(Annotation.RAYQUAZA_EXPORT);
-                    ruleInfo.setPsiClass(psiClass);
-                    ruleInfo.setMethodPsiElement(psiClass);
-                    ruleInfo.setDocComment("");
+                    // 获取path
+                    String pathValue = path != null ? path.getText() : "";
+                    if (ObjectUtils.isNotEmpty(pathValue) && pathValue.startsWith("/")) {
+                        // 去除开头的/
+                        pathValue = pathValue.substring(1);
+                    }
+                    if (ObjectUtils.isEmpty(pathValue) && rayquazaRoot.endsWith("/")) {
+                        // 如果是个空路径，那么rayquazaRoot不需要加/
+                        rayquazaRoot = rayquazaRoot.substring(0, rayquazaRoot.length() - 1);
+                    }
+                    pathValue = rayquazaRoot + pathValue;
+                    pathValue = pathValue.replaceAll("\"", "");
+                    // 获取page
+                    boolean pageValue = page != null && Boolean.parseBoolean(page.getText());
+                    // 获取create
+                    boolean createValue = create != null && Boolean.parseBoolean(create.getText());
+                    // 获取update
+                    boolean updateValue = update != null && Boolean.parseBoolean(update.getText());
+                    // 获取delete
+                    boolean deleteValue = delete != null && Boolean.parseBoolean(delete.getText());
+                    // 获取single
+                    boolean singleValue = single != null && Boolean.parseBoolean(single.getText());
+                    // 获取类的doc
+                    String classDoc = "";
                     PsiDocComment docComment = psiClass.getDocComment();
                     if (ObjectUtils.isNotEmpty(docComment)) {
                         StringBuilder doc = PsiDocCommentUtil.getDoc(docComment);
                         if (ObjectUtils.isNotEmpty(doc.toString())) {
-                            String s = doc.toString().strip().replaceAll("\n", "");
-                            System.out.println(psiClass.getName() + ":" + s);
-                            ruleInfo.setDocComment(s);
+                            classDoc = doc.toString().strip().replaceAll("\n", "");
                         }
                     }
-                    psiElements.add(ruleInfo);
+                    if (pageValue) {
+                        RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.GET_MAPPING, classDoc, psiClass);
+                        RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.GET, pathValue);
+                        ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
+                        ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
+                        psiElements.add(ruleInfo);
+                    }
+                    if (singleValue){
+                        RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.SINGLE, classDoc, psiClass);
+                        RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.GET, pathValue + "/{id}");
+                        ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
+                        ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
+                        psiElements.add(ruleInfo);
+                    }
+                    if (createValue) {
+                        RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.POST_MAPPING, classDoc, psiClass);
+                        RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.POST, pathValue);
+                        ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
+                        ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
+                        psiElements.add(ruleInfo);
+                    }
+                    if (updateValue) {
+                        RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.PUT_MAPPING, classDoc, psiClass);
+                        RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.PUT, pathValue);
+                        ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
+                        ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
+                        psiElements.add(ruleInfo);
+                    }
+                    if (deleteValue) {
+                        RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.DELETE_MAPPING, classDoc, psiClass);
+                        RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.DELETE, pathValue + "/{id}");
+                        ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
+                        ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
+                        psiElements.add(ruleInfo);
+                    }
                 }
             }
             result.put(psiElement, psiElements);
