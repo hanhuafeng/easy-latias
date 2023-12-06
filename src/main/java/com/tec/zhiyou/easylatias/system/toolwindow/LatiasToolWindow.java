@@ -624,18 +624,23 @@ public class LatiasToolWindow {
                         ControllerElementNode controllerElementNode = (ControllerElementNode) controllerNode.nextElement();
                         if (controllerElementNode.isSelected()) {
                             String permissionTemplate = getPermissionString(restElement, controllerElementNode);
+                            String[] split = permissionTemplate.split(":");
+                            String className = split[0];
+                            permissionList.add(className);
                             permissionList.add(permissionTemplate);
                         }
                     }
                 }
                 permission = String.join("\n", permissionList);
             }
-            String key = userInfo.getKey();
-            String roleName = userInfo.getRoleName();
-            String role = roleTemplate.replace("{{key}}", key)
-                    .replace("{{roleName}}", roleName)
-                    .replace("{{permission}}", permission);
-            userRoleTempList.add(role);
+            if (ObjectUtils.isNotEmpty(permission)) {
+                String key = userInfo.getKey();
+                String roleName = userInfo.getRoleName();
+                String role = roleTemplate.replace("{{key}}", key)
+                        .replace("{{roleName}}", roleName)
+                        .replace("{{permission}}", permission);
+                userRoleTempList.add(role);
+            }
         }
         return userRoleTempList;
     }
