@@ -114,14 +114,13 @@ public class LatiasService implements Serializable {
         Collection<PsiClass> rayquazaExportComponents = javaService.getClassesByAnnotationQualifiedName(Annotation.RAYQUAZA_EXPORT.getQualifiedName());
         PsiElement[] temp = rayquazaExportComponents.stream().distinct().toArray(PsiElement[]::new);
         String rayquazaRoot = DataCenter.getInstance(project).getBaseConfig().getRayquazaRoot();
-        if (ObjectUtils.isEmpty(rayquazaRoot)) {
-            rayquazaRoot = "/";
-        } else {
-            if (!rayquazaRoot.startsWith("/")) {
-                rayquazaRoot = "/" + rayquazaRoot;
+        // 移除rayquazaRoot收尾斜杠
+        if (ObjectUtils.isNotEmpty(rayquazaRoot)) {
+            if (rayquazaRoot.startsWith("/")) {
+                rayquazaRoot = rayquazaRoot.substring(1);
             }
-            if (!rayquazaRoot.endsWith("/")) {
-                rayquazaRoot = rayquazaRoot + "/";
+            if (rayquazaRoot.endsWith("/")) {
+                rayquazaRoot = rayquazaRoot.substring(0, rayquazaRoot.length() - 1);
             }
         }
         for (PsiElement psiElement : temp) {
@@ -141,18 +140,25 @@ public class LatiasService implements Serializable {
                     PsiAnnotationMemberValue update = rayquazaExportAnnotation.get().findAttributeValue("update");
                     PsiAnnotationMemberValue delete = rayquazaExportAnnotation.get().findAttributeValue("delete");
                     PsiAnnotationMemberValue single = rayquazaExportAnnotation.get().findAttributeValue("single");
+                    List<String> pathList = new LinkedList<>();
+                    if (ObjectUtils.isNotEmpty(rayquazaRoot)) {
+                        pathList.add(rayquazaRoot);
+                    }
                     // 获取path
                     String pathValue = path != null ? path.getText() : "";
-                    if (ObjectUtils.isNotEmpty(pathValue) && pathValue.startsWith("/")) {
-                        // 去除开头的/
+                    pathValue = pathValue.replaceAll("\"", "");
+                    // 移除pathValue首尾斜杠
+                    if (pathValue.startsWith("/")) {
                         pathValue = pathValue.substring(1);
                     }
-                    if (ObjectUtils.isEmpty(pathValue) && rayquazaRoot.endsWith("/")) {
-                        // 如果是个空路径，那么rayquazaRoot不需要加/
-                        rayquazaRoot = rayquazaRoot.substring(0, rayquazaRoot.length() - 1);
+                    if (pathValue.endsWith("/")) {
+                        pathValue = pathValue.substring(0, pathValue.length() - 1);
                     }
-                    pathValue = rayquazaRoot + pathValue;
-                    pathValue = pathValue.replaceAll("\"", "");
+                    pathList.add(pathValue);
+                    pathValue = String.join("/", pathList);
+                    if (ObjectUtils.isNotEmpty(pathValue) && !pathValue.startsWith("/")) {
+                        pathValue = "/" + pathValue;
+                    }
                     // 获取page
                     boolean pageValue = page != null && Boolean.parseBoolean(page.getText());
                     // 获取create
@@ -179,7 +185,7 @@ public class LatiasService implements Serializable {
                         ruleInfo.setTypeEnum(TypeEnum.RAYQUAZA);
                         psiElements.add(ruleInfo);
                     }
-                    if (singleValue){
+                    if (singleValue) {
                         RuleInfo ruleInfo = new RuleInfo(psiClass, Annotation.SINGLE, classDoc, psiClass);
                         RayquazaRuleInfoDetail rayquazaRuleInfoDetail = new RayquazaRuleInfoDetail(HttpMethod.GET, pathValue + "/{id}");
                         ruleInfo.setRayquazaRuleInfoDetail(rayquazaRuleInfoDetail);
